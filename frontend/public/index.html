@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <!--[if IE]>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <![endif]-->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="">
+  <meta name="author" content="">
+  <!-- page title -->
+  <title>Cake & Bake - HTML5 Template</title>
+  <!--[if lt IE 9]>
+    <script src="assets/js/respond.js"></script>
+    <![endif]-->
+  <!-- Font files -->
+  <link href="https://fonts.googleapis.com/css?family=Satisfy:400,400i,700,700i%7CNunito:300,400,700" rel="stylesheet">
+  <link href="assets/fonts/flaticon/flaticon.css" rel="stylesheet" type="text/css">
+  <link href="assets/fonts/fontawesome/fontawesome-all.min.css" rel="stylesheet" type="text/css">
+  <!-- Favicons-->
+  <link rel="apple-touch-icon" sizes="72x72" href="assets/favicons/apple-icon-72x72.png">
+  <link rel="apple-touch-icon" sizes="114x114" href="assets/favicons/apple-icon-114x114.png">
+  <link rel="shortcut icon" href="assets/favicons/favicon.ico" type="image/x-icon">
+  <!-- Bootstrap core CSS -->
+  <link href="assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- plugins CSS -->
+  <link href="assets/css/plugins.css" rel="stylesheet">
+  <!-- Colors CSS -->
+  <link href="assets/styles/maincolors.css" rel="stylesheet">
+  <!-- LayerSlider CSS -->
+  <link rel="stylesheet" href="assets/vendor/layerslider/css/layerslider.css">
+  <!-- Prefix free -->
+  <script src="assets/js/prefixfree.min.js"></script>
+</head>
+
+<body>
+  <div id="root"></div>
+
+  <!-- Load jQuery only once -->
+  <script src="assets/vendor/jquery/jquery.min.js"></script>
+
+  <!-- Bootstrap -->
+  <script src="assets/vendor/bootstrap/js/bootstrap.min.js"></script>
+
+  <!-- Isotope plugin (required for custom.js) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.isotope/3.0.6/isotope.pkgd.min.js"></script>
+
+  <!-- Owl Carousel -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
+
+  <!-- Other plugins -->
+  <script src="assets/js/plugins.js"></script>
+
+  <!-- Custom scripts -->
+  <script src="assets/js/custom.js"></script>
+
+  <!-- number counter script -->
+  <script src="assets/js/counter.js"></script>
+
+  <!-- GreenSock -->
+  <script src="assets/vendor/layerslider/js/greensock.js"></script>
+
+  <!-- LayerSlider script files -->
+  <script src="assets/vendor/layerslider/js/layerslider.transitions.js"></script>
+  <script src="assets/vendor/layerslider/js/layerslider.kreaturamedia.jquery.js"></script>
+  <script src="assets/vendor/layerslider/js/layerslider.load.js"></script>
+
+  <!-- Initialize scripts after DOM is loaded -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Initialize scripts that depend on DOM being ready
+      if (typeof window.$ !== 'undefined') {
+        // Initialize LayerSlider if it exists
+        if (window.$('#slider').length && typeof window.$('#slider').layerSlider === 'function') {
+          window.$('#slider').layerSlider();
+        }
+
+        // Initialize carousels
+        if (window.$('#owl-services').length && typeof window.$.fn.owlCarousel === 'function') {
+          window.$('#owl-services').owlCarousel({
+            loop: true,
+            margin: 10,
+            nav: true,
+            responsive: {
+              0: { items: 1 },
+              600: { items: 2 },
+              1000: { items: 3 },
+            },
+          });
+        }
+
+        if (window.$('#owl-posts').length && typeof window.$.fn.owlCarousel === 'function') {
+          window.$('#owl-posts').owlCarousel({
+            loop: true,
+            margin: 10,
+            nav: true,
+            responsive: {
+              0: { items: 1 },
+              600: { items: 2 },
+              1000: { items: 3 },
+            },
+          });
+        }
+      }
+    });
+  </script>
+</body>
+
+</html>
