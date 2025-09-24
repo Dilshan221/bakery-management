@@ -1,79 +1,96 @@
+import mongoose from "mongoose";
 import Attendance from "../models/attendanceModel.js";
-import User from "../models/userModel.js";
+import Employee from "../models/employeeModel.js";
 
-// Mark attendance
+// Normalize any incoming date to local midnight
+const normalizeDay = (d) => {
+  if (!d) return new Date(new Date().toDateString());
+  const date = new Date(d);
+  return Number.isNaN(date.getTime())
+    ? new Date(new Date().toDateString())
+    : new Date(date.toDateString());
+};
+
+// Create / Mark attendance
 export const markAttendance = async (req, res) => {
   try {
-    const { userId, date, checkIn, checkOut, status } = req.body;
-    
-    // Check if user exists
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
+    const { userId, date, checkIn, checkOut, status, note } = req.body;
+    if (!userId) return res.status(400).json({ message: "userId is required" });
+
+    // ✅ verify EMPLOYEE exists (was User before)
+    const emp = await Employee.findById(userId).lean();
+    if (!emp) return res.status(404).json({ message: "Employee not found" });
+
+    const day = normalizeDay(date);
+
+    // Block duplicates (also covered by unique index)
+    const exists = await Attendance.findOne({ userId, date: day }).lean();
+    if (exists) {
+      return res
+        .status(409)
+        .json({ message: "Attendance already marked for this date" });
     }
 
-    // Check if attendance already exists for this user and date
-    const existingAttendance = await Attendance.findOne({ userId, date });
-    if (existingAttendance) {
-      return res.status(400).json({ message: "Attendance already marked for this date" });
-    }
-
-    const attendance = new Attendance({
+    const saved = await Attendance.create({
       userId,
-      date: date || new Date(),
-      checkIn,
-      checkOut,
-      status
+      date: day,
+      checkIn: checkIn ?? null,
+      checkOut: checkOut ?? null,
+      status: status || "present",
+      note: note || "",
     });
 
-    const savedAttendance = await attendance.save();
-    res.status(201).json(savedAttendance);
+    return res.status(201).json(saved);
   } catch (error) {
-    console.error("Error marking attendance:", error);
-    res.status(500).json({
-      error: "Internal server error",
-      details: error.message,
-    });
-  }
-};
-
-// Get all attendance records
-export const getAttendance = async (req, res) => {
-  try {
-    const attendance = await Attendance.find().populate('userId', 'name email department position');
-    
-    if (attendance.length === 0) {
-      return res.status(404).json({ message: "No attendance records found" });
+    if (error?.code === 11000) {
+      return res
+        .status(409)
+        .json({ message: "Attendance already marked for this date" });
     }
-    
-    res.status(200).json(attendance);
-  } catch (error) {
-    console.error("Error fetching attendance:", error);
-    res.status(500).json({
-      error: "Internal server error",
-      details: error.message,
-    });
+    console.error("[ATTENDANCE MARK]", error);
+    return res
+      .status(500)
+      .json({ error: "Internal server error", details: error.message });
   }
 };
 
-// Get attendance for a specific user
+// Get ALL attendance
+export const getAttendance = async (_req, res) => {
+  try {
+    const rows = await Attendance.find({})
+      .sort({ date: -1, createdAt: -1 })
+      .populate("userId", "name email department position")
+      .lean();
+
+    return res.status(200).json(rows);
+  } catch (error) {
+    console.error("[ATTENDANCE GETALL]", error);
+    return res
+      .status(500)
+      .json({ error: "Internal server error", details: error.message });
+  }
+};
+
+// Get attendance for a specific user (employee)
 export const getUserAttendance = async (req, res) => {
   try {
     const { userId } = req.params;
-    
-    const attendance = await Attendance.find({ userId }).populate('userId', 'name email department position');
-    
-    if (attendance.length === 0) {
-      return res.status(404).json({ message: "No attendance records found for this user" });
+
+    if (!mongoose.isValidObjectId(userId)) {
+      return res.status(400).json({ message: "Invalid userId" });
     }
-    
-    res.status(200).json(attendance);
+
+    const rows = await Attendance.find({ userId })
+      .sort({ date: -1, createdAt: -1 })
+      .populate("userId", "name email department position")
+      .lean();
+
+    return res.status(200).json(rows);
   } catch (error) {
-    console.error("Error fetching user attendance:", error);
-    res.status(500).json({
-      error: "Internal server error",
-      details: error.message,
-    });
+    console.error("[ATTENDANCE GET USER]", error);
+    return res
+      .status(500)
+      .json({ error: "Internal server error", details: error.message });
   }
 };
 
@@ -81,22 +98,35 @@ export const getUserAttendance = async (req, res) => {
 export const updateAttendance = async (req, res) => {
   try {
     const { id } = req.params;
-    
-    const attendance = await Attendance.findById(id);
-    if (!attendance) {
+
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({ message: "Invalid attendance id" });
+    }
+
+    const patch = { ...req.body };
+    if (patch.date) {
+      patch.date = normalizeDay(patch.date);
+    }
+
+    const updated = await Attendance.findByIdAndUpdate(id, patch, {
+      new: true,
+      runValidators: true,
+    }).populate("userId", "name email department position");
+
+    if (!updated) {
       return res.status(404).json({ message: "Attendance record not found" });
     }
 
-    const updatedAttendance = await Attendance.findByIdAndUpdate(id, req.body, {
-      new: true,
-    }).populate('userId', 'name email department position');
-
-    res.status(200).json(updatedAttendance);
+    return res.status(200).json(updated);
   } catch (error) {
-    console.error("Error updating attendance:", error);
-    res.status(500).json({
-      error: "Internal server error",
-      details: error.message,
-    });
+    if (error?.code === 11000) {
+      return res
+        .status(409)
+        .json({ message: "Attendance already exists for that date" });
+    }
+    console.error("[ATTENDANCE UPDATE]", error);
+    return res
+      .status(500)
+      .json({ error: "Internal server error", details: error.message });
   }
 };
